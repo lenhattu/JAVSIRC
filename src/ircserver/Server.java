@@ -57,7 +57,7 @@ public class Server implements Runnable {
     //create,and start waitingThread serving a connection with client
     private void connectClient(Socket socket)
     {
-        ClientThread client = new ClientThread(this, socket);
+        ServerThread client = new ServerThread(this, socket);
         try{
             client.open();
             client.start();

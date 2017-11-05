@@ -6,7 +6,7 @@ import java.util.LinkedList;
 public class RoomList extends LinkedList<Room> {
 	
 	//create room
-	public synchronized Room createRoom(String roomName, ClientThread client){
+	public synchronized Room createRoom(String roomName, ServerThread client){
 		Room r = new Room(roomName, client);
 		this.addLast(r);//add the new room into room list
 		return r;
@@ -20,7 +20,7 @@ public class RoomList extends LinkedList<Room> {
 	}
 	
 	//first version of findRoom,need send the error message right after found the result before it go to wait state
-	public synchronized Room findRoom(String roomName, ClientThread client){
+	public synchronized Room findRoom(String roomName, ServerThread client){
 		for(int i =0;i<this.size();i++){
 			if (this.get(i).getName().equals(roomName))
 				return get(i);
@@ -39,7 +39,7 @@ public class RoomList extends LinkedList<Room> {
 	}
 	
 	//list the name of the room, and its topic
-	public synchronized void listRoom(String roomName, ClientThread client){
+	public synchronized void listRoom(String roomName, ServerThread client){
 		String message = "-----Channel : Name-----\n";
 		
 		Room r = findRoom(roomName,client);
@@ -53,7 +53,7 @@ public class RoomList extends LinkedList<Room> {
 	}
 	
 	//list all of the rooms in the server
-	public synchronized void listRoom(ClientThread client){
+	public synchronized void listRoom(ServerThread client){
 		String message = "-----Channel : Name-----\n";
 		for (int i =0;i<this.size();i++){
 			Room r = this.get(i);
@@ -66,7 +66,7 @@ public class RoomList extends LinkedList<Room> {
 	
 	//handle join room of user
 	//need 2 syn resources
-	public synchronized void joinRoom(String roomName, ClientThread client){
+	public synchronized void joinRoom(String roomName, ServerThread client){
 		Room r = findRoom(roomName);
 		if (r != null){//if room exist, then add client into CL
 			RoomClientList roomCL = r.getClientList();

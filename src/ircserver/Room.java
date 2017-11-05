@@ -7,7 +7,7 @@ public class Room {
 	private RoomClientList CL = null;// client list, each room has a list of users who joined the room
 	
 	//create room, a room is created when the first user join the room
-	public Room(String name, ClientThread client){
+	public Room(String name, ServerThread client){
 		this.name = name;
 		CL = new RoomClientList();
 		CL.addClient(client);
@@ -42,7 +42,7 @@ public class Room {
 		}
 	}
 	//handle command TOPIC, need to be sync with setTopic, and getTopic
-	public void topic(String room, String text, ClientThread client){
+	public void topic(String room, String text, ServerThread client){
 		synchronized (topic) {// topic command need to get lock of topic before it can set, and return the new topic to user
 			if (text != null && !text.equals(""))// if <topic> given, set topic of the channel
 				setTopic(text);

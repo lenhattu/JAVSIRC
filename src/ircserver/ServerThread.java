@@ -3,7 +3,7 @@ package ircserver;
 import java.io.*;
 import java.net.Socket;
 
-public class ClientThread extends Thread
+public class ServerThread extends Thread
 {  
    private Server server = null; //server thread, use to access shared resource
    private Socket socket = null; //socket used in this connection
@@ -13,7 +13,7 @@ public class ClientThread extends Thread
    private RoomList joinedRoomList = null;  //manage channels are currently joined by user
    private String[] commands = {"NICK","QUIT","JOIN","LEAVE","LIST","TOPIC","SEND"};//list of supported commands
 
-   public ClientThread(Server server, Socket socket){  
+   public ServerThread(Server server, Socket socket){
 	  super();
       this.server = server;
       this.socket = socket;

@@ -5,7 +5,7 @@ package ircserver;
 public class RoomClientList extends ClientList{
 	
 	//send message from one user to all of users in one room
-	public synchronized void sendMessage(String roomName, String nick, String input, ClientThread client){
+	public synchronized void sendMessage(String roomName, String nick, String input, ServerThread client){
 		if (findClient(nick) == null)//not in this channel
 			   client.send("Error: Cannot send to channel "+roomName);//ERR_CANNOTSENDTOCHAN
 		else{
@@ -16,7 +16,7 @@ public class RoomClientList extends ClientList{
 	}
 	
 	//find a user which has nick name <nick>
-	public synchronized ClientThread findClient(String nick, Room r, ClientThread client){
+	public synchronized ServerThread findClient(String nick, Room r, ServerThread client){
 		for (int i = 0; i < this.size() ; i++)//can replace by iterator
 	         if (get(i).getNickName().equals(nick))
 	            return get(i);
