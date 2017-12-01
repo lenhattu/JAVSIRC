@@ -10,7 +10,7 @@ public class ServerClientList extends ClientList{
 	   if (client == null || client == requestClient){// if the nick name is not used by any users
 		   requestClient.setNickName(nickName);// assign the nick name for the client
 		   add(requestClient);// add the client into the list of active users
-		   requestClient.send("Your nickname is accepted!");
+		   requestClient.send("Your nickname is accepted!\n");
 	   }
 	   else//send error message
 		   requestClient.send("Error: Nickname " +nickName+ " is already in use");//ERR_NICKNAMEINUSE  

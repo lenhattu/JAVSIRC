@@ -38,14 +38,13 @@ public class RoomList extends LinkedList<Room> {
 		return null;
 	}
 	
-	//list the name of the room, and its topic
+	//list the name of the room
 	public synchronized void listRoom(String roomName, ServerThread client){
 		String message = "-----Channel : Name-----\n";
 		
 		Room r = findRoom(roomName,client);
 		if (r != null){
-			String topic = r.getTopic();
-			message += "Listing..."+roomName+" : "+topic+"\n";
+			message += "Listing..." + roomName + "\n";
 		}
 		message += "------End of /LIST-------\n";
 		client.send(message);
@@ -57,8 +56,7 @@ public class RoomList extends LinkedList<Room> {
 		String message = "-----Channel : Name-----\n";
 		for (int i =0;i<this.size();i++){
 			Room r = this.get(i);
-			String topic = r.getTopic();
-			message += "Listing..."+r.getName()+" : "+topic+"\n";
+			message += "Listing..." + r.getName() + "\n";
 		}
 		message += "------End of /LIST-------\n";
 		client.send(message);
@@ -77,11 +75,10 @@ public class RoomList extends LinkedList<Room> {
 			r = createRoom(roomName, client);
 		}
 		if (r == null)//can not create room
-			   client.send("Error: Cannot join channel "+roomName+"\n");//ERR_CHANNELISFULL
-		   else{//send channel topic, and list of active users in the channel
-			   String message = r.getName()+"  "+r.getTopic()+"\n";//RPL_TOPIC or RPL_NOTOPIC
-			   message += r.getName()+"  "+r.getClientList().listClient()+"\n";//RPL_NAMREPLY
-			   message += "-------"+r.getName()+" :End of /NAMES list-------\n";//RPL_ENDOFNAMES
+			   client.send("Error: Cannot join channel " + roomName + "\n");//ERR_CHANNELISFULL
+		   else{//send list of active users in the channel
+			   String message = r.getName() + "\n";
+			   message += "Active users: " + r.getClientList().listClient() + "\n";//RPL_NAMEREPLY
 			   client.getJoinedRoomList().addLast(r);//add join room into joined room list of client, client can manage room it has joined
 			   client.send(message);
 		   }

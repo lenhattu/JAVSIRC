@@ -10,8 +10,8 @@ public class ServerThread extends Thread
    private String nickName  = null; //nick Name of the user in this connection
    private DataInputStream dataInputStream = null; //input stream
    private DataOutputStream dataOutputStream = null; //output stream
-   private RoomList joinedRoomList = null;  //manage channels are currently joined by user
-   private String[] commands = {"NICK","QUIT","JOIN","LEAVE","LIST","TOPIC","SEND"};//list of supported commands
+   private RoomList joinedRoomList = null;  //manage rooms are currently joined by user
+   private String[] commands = {"NICK","QUIT","JOIN","LEAVE","LIST","USERS","SEND"};//list of supported commands
 
    public ServerThread(Server server, Socket socket){
 	  super();
@@ -37,7 +37,7 @@ public class ServerThread extends Thread
       }
    
    //handle corrupted connection
-   //first, leave all of the channels joined by this user
+   //first, leave all of the rooms joined by this user
    //second, if the room is empty, remove from room list
    //third,remove it from list of active users
    //finally,stop the thread
@@ -47,8 +47,9 @@ public class ServerThread extends Thread
 			   Room r = joinedRoomList.getFirst();
 			   RoomClientList roomCL = r.getClientList();
 			   roomCL.removeClient(this.nickName);//remove client from room
-			   this.joinedRoomList.remove(r); //remove one room joined roomS
-			   server.getRoomList().removeRoom(r.getName());//check if CL size =0, then delete room		   
+               roomCL.sendNotification(r.getName(), this.nickName + " crashed!\n");
+			   this.joinedRoomList.remove(r); //remove the room from joined rooms
+			   server.getRoomList().removeRoom(r.getName());//check if CL size = 0, then delete room
 		   }   			   
 		   //now, the client is associated with no room, can remove it from the client list
 		   server.getClientList().quit(this.nickName);
@@ -105,7 +106,7 @@ public class ServerThread extends Thread
 		   					break;
 				   case 4:  handleListCommand(param);
 		   					break;
-				   case 5:  handleTopicCommand(param,text);
+				   case 5:  handleUsersCommand(param);
 		   					break;
 				   case 6:  handleSendCommand(param,text);
 		   					break;
@@ -164,7 +165,7 @@ public class ServerThread extends Thread
    //use 1 resource at once time
    private void handleNickCommand(String param){
 	   if (param != null){
-		   if (param.length()>10) // A <nickname> has a maximum length of ten (10) characters.
+		   if (param.length() > 10) // A <nickname> has a maximum length of ten (10) characters.
 			   this.send("Error: exceed the maximum length of a nickname");
 		   else if (!checkParamFormat(param))
 			   this.send("Error: Erroneus nickname "+ param);//ERR_ERRONEUSNICKNAME
@@ -208,7 +209,7 @@ public class ServerThread extends Thread
 	   if (param == null)
 		   this.send("Error: JOIN did not have enough parameters");//ERR_NEEDMOREPARAMS
 	   else if (param.charAt(0)!='#' || !checkParamFormat(param.substring(1)))
-		   this.send("Error: No such channel "+ param+"\n");//ERR_NOSUCHCHANNEL
+		   this.send("Error: No such channel " + param + "\n");//ERR_NOSUCHCHANNEL
 	   else if (param.length()>254)
 		   this.send("Error: exceed the maximum length of a channel");//ERR_EXCEEDCHANNELMAXLENGTH
 	   else
@@ -221,7 +222,7 @@ public class ServerThread extends Thread
 	   if (param == null)
 		   this.send("Error: LEAVE did not have enough parameters");//ERR_NEEDMOREPARAMS
 	   else if (param.charAt(0)!='#' || !checkParamFormat(param.substring(1)))
-		   this.send("Error: No such channel "+ param+"\n");//ERR_NOSUCHCHANNEL
+		   this.send("Error: No such channel "+ param + "\n");//ERR_NOSUCHCHANNEL
 	   else{
 		   Room r = server.getRoomList().findRoom(param,this);
 		   if (r !=null){//room exists
@@ -246,19 +247,19 @@ public class ServerThread extends Thread
 		   server.getRoomList().listRoom(param,this);
    }
    
-   //handle TOPIC command
+   //handle USERS command
    //use 1 resource at once time
-   private void handleTopicCommand(String param, String text){
+   private void handleUsersCommand(String param){
 	   if (param == null)
-		   this.send("Error: TOPIC did not have enough parameters");//ERR_NEEDMOREPARAMS
+		   this.send("Error: USERS did not have enough parameter");//ERR_NEEDMOREPARAMS
 	   else if (param.charAt(0)!='#' || !checkParamFormat(param.substring(1)))
 		   this.send("Error: No such channel "+ param+"\n");//ERR_NOSUCHCHANNEL
 	   else{
 		   Room r = server.getRoomList().findRoom(param,this);
-		   if (r !=null){//room exists
+		   if (r != null){//room exists
 			   RoomClientList roomCL = r.getClientList();
-			   if (roomCL.findClient(this.nickName,r,this) != null)//if client in this channel
-				   r.topic(param, text, this);//change, and get topic at the same run of a thread				  
+			   String message = "List of users: " + roomCL.listClient() + "\n";
+			   this.send(message);
 		   }
 	   }
    }
@@ -268,10 +269,10 @@ public class ServerThread extends Thread
    private void handleSendCommand(String param, String text){
 	   if (param == null)
 		   this.send("Error: SEND did not have enough parameters");//ERR_NEEDMOREPARAMS
-	   else if (param.charAt(0)!='#' || !checkParamFormat(param.substring(1)))
-		   this.send("Error: No such channel "+ param+"\n");//ERR_NOSUCHCHANNEL
+	   else if (param.charAt(0) != '#' || !checkParamFormat(param.substring(1)))
+		   this.send("Error: No such channel " + param + "\n");//ERR_NOSUCHCHANNEL
 	   else if (text == null || text.equals(""))//ERR_NOTEXTTOSEND
-		   this.send("Error: No text to send");
+		   this.send("Error: No text to send\n");
 	   else{
 		   Room r = server.getRoomList().findRoom(param,this);
 		   if (r !=null){//room exists

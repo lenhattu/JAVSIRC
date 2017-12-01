@@ -43,7 +43,11 @@ public class Client implements Runnable {
     }
 
     public static void main(String[] args) {
-
+        Client client = null;
+        if (args.length != 2)
+            System.out.println("Usage: java client.ChatClient host port");
+        else
+            client = new Client(args[0], Integer.parseInt(args[1]));
     }
 
     //get the reference to tabbed panel

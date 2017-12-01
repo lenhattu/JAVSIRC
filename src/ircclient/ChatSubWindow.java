@@ -55,14 +55,14 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 		input.selectAll();
 		//if user in console window
 		if (this.ChatWindowName.equals("Console")){
-			setDialog(text);//display the command entered by used in the console
+			setDialog(text);//display the command entered by user in the console
 			//handle LEAVE command entered by user
 			//remove the chat window for the room specified in LEAVE command
 			String [] parse = text.split(" ", 2);
 			if (parse.length > 1 && parse[0].equals("LEAVE") && !parse[1].equals("Console")){//check it is the LEAVE command
-				ChatSubWindow removingtab = thread.getClientChatWindow().findChatWindow(parse[1]);//find the chat window of specified room
-				if (removingtab != null)// if there is a chat window for a specified room
-					thread.getClientChatWindow().getTabbedwnd().remove(removingtab);//then delete the room
+				ChatSubWindow removingTab = thread.getClientChatWindow().findChatWindow(parse[1]);//find the chat window of specified room
+				if (removingTab != null)// if there is a chat window for a specified room
+					thread.getClientChatWindow().getTabbedwnd().remove(removingTab);//then delete the room
 			}
 			
 			thread.send(text);//send the original message entered by user
@@ -79,7 +79,6 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 	public void setDialog(String message){
 		dialog.append(message+newline);
 		dialog.setCaretPosition(dialog.getDocument().getLength());//force the panel scroll to the bottom of the text area
-
 	}
 	
 }

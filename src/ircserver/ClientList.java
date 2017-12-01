@@ -31,7 +31,7 @@ public class ClientList extends LinkedList<ServerThread>{
 	public synchronized String listClient(){
 		String list = "";
 		for (int i = 0;i< this.size();i++){
-			list += get(i).getNickName()+" ";
+			list += get(i).getNickName() + " ";
 		}
 		return list;
 	}

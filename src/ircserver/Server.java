@@ -35,12 +35,14 @@ public class Server implements Runnable {
     public void run() {
         while (waitingThread != null){
             try{
+                if (Thread.interrupted())
+                    return;
                 System.out.println("Waiting for incoming connection request...");
                 connectClient(server.accept());
             }
             catch(IOException e){
                 System.out.println("Can't accept this request: " + e);
-                waitingThread.stop();
+                waitingThread.interrupt();
                 waitingThread = null;
             }
         }
