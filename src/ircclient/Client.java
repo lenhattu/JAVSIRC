@@ -29,10 +29,10 @@ public class Client implements Runnable {
             dataInputStream = new DataInputStream(System.in);
             dataOutputStream = new DataOutputStream(socket.getOutputStream());
             //create 2 threads
-            clientThread = new ClientThread(this, socket);// clientThread thread handle display output received from server
-            thread = new Thread(this);                  // thread thread handle get input from user and send to server
-            clientThread.start();
+            thread = new Thread(this); // thread handle get input from user and send to server
+            clientThread = new ClientThread(this, socket);// clientThread handle display output received from server
             thread.start();
+            clientThread.start();
         }
         catch(UnknownHostException e){
             System.out.println("Unknown host: " + e.getMessage());
@@ -60,27 +60,27 @@ public class Client implements Runnable {
         return console;
     }
 
-    //purpose of this thread is waiting for command from user
+    //purpose of this is waiting for command from user
     //then handle the command, and send command to server
     @Override
     public void run(){
-
         //create a frame contains a tabbed panel
         JFrame frame = new JFrame("Chat Client");
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {//event listener for closing window
-                terminateAll();
+                close();
+                //exit
+                System.exit(0);
             }
         });
 
         //create panel
-        clientWnd = new ChatWindow(this);//create tabbed panel
-        console = (ChatSubWindow)clientWnd.getTabbedwnd().getComponentAt(0);//get the console Window
+        clientWnd = new ChatWindow(this); //create tabbed panel
+        console = (ChatSubWindow)clientWnd.getTabbedwnd().getComponentAt(0); //get the console Window
         //add panel to the frame
         frame.getContentPane().add(clientWnd, BorderLayout.CENTER);
         frame.pack();
         frame.setVisible(true);
-
     }
 
     //send the message entered by user to server
@@ -90,8 +90,8 @@ public class Client implements Runnable {
             dataOutputStream.flush();
         }
         catch(IOException e){
-            console.setDialog("Can not send : " + e.getMessage());
-            terminateAll();
+            console.setDialog("Can not send: " + e.getMessage());
+            close();
         }
     }
 
@@ -99,20 +99,15 @@ public class Client implements Runnable {
     public void close()
     {
         try
-        {  if (dataInputStream != null)  dataInputStream.close();
+        {
+            if (dataInputStream != null)  dataInputStream.close();
             if (dataOutputStream != null)  dataOutputStream.close();
-            if (socket    != null)  socket.close();
+            if (socket != null)
+                socket.close();
+            this.clientThread.close();
         }
         catch(IOException e){
             console.setDialog(e.getMessage());
         }
-    }
-
-    public void terminateAll(){
-        //close resources used by 2 threads
-        close();
-        clientThread.close();
-        //exit
-        System.exit(0);
     }
 }

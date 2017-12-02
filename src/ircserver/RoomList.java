@@ -2,7 +2,7 @@ package ircserver;
 
 import java.util.LinkedList;
 
-//list of rooms, manage rooms(channel) in the server
+//list of rooms and manage rooms in the server
 public class RoomList extends LinkedList<Room> {
 	
 	//create room
@@ -19,13 +19,13 @@ public class RoomList extends LinkedList<Room> {
 			this.remove(r);
 	}
 	
-	//first version of findRoom,need send the error message right after found the result before it go to wait state
+	//first version of findRoom, need send the error message right after found the result before it go to wait state
 	public synchronized Room findRoom(String roomName, ServerThread client){
-		for(int i =0;i<this.size();i++){
+		for(int i = 0; i < this.size(); i++){
 			if (this.get(i).getName().equals(roomName))
 				return get(i);
 		}
-		client.send("Error: No such channel "+roomName);//ERR_NOSUCHCHANNEL
+		client.send("Error: No such room " + roomName); //ERR_NOSUCHROOM
 		return null;
 	}
 	
@@ -40,25 +40,19 @@ public class RoomList extends LinkedList<Room> {
 	
 	//list the name of the room
 	public synchronized void listRoom(String roomName, ServerThread client){
-		String message = "-----Channel : Name-----\n";
-		
 		Room r = findRoom(roomName,client);
 		if (r != null){
-			message += "Listing..." + roomName + "\n";
+			client.send(r.getName() + " is available\n");
 		}
-		message += "------End of /LIST-------\n";
-		client.send(message);
-		
 	}
 	
 	//list all of the rooms in the server
 	public synchronized void listRoom(ServerThread client){
-		String message = "-----Channel : Name-----\n";
-		for (int i =0;i<this.size();i++){
+		String message = "Available rooms:\n";
+		for (int i = 0; i < this.size(); i++){
 			Room r = this.get(i);
-			message += "Listing..." + r.getName() + "\n";
+			message += r.getName() + "\n";
 		}
-		message += "------End of /LIST-------\n";
 		client.send(message);
 	}
 	
@@ -66,18 +60,18 @@ public class RoomList extends LinkedList<Room> {
 	//need 2 syn resources
 	public synchronized void joinRoom(String roomName, ServerThread client){
 		Room r = findRoom(roomName);
-		if (r != null){//if room exist, then add client into CL
+		if (r != null){ //if room exist, then add client into CL
 			RoomClientList roomCL = r.getClientList();
 			if (roomCL.findClient(client.getNickName()) == null)
-				roomCL.addClient(client);	
+				roomCL.addClient(client);
 		}
-		else {//if not create new room, add client to CL
+		else { //if not create new room, add client to CL
 			r = createRoom(roomName, client);
 		}
 		if (r == null)//can not create room
-			   client.send("Error: Cannot join channel " + roomName + "\n");//ERR_CHANNELISFULL
-		   else{//send list of active users in the channel
-			   String message = r.getName() + "\n";
+			   client.send("Error: Cannot join room " + roomName + "\n");//ERR_CHANNELISFULL
+		   else{ //send list of active users in the room
+			   String message = "You joined " + r.getName() + "\n";
 			   message += "Active users: " + r.getClientList().listClient() + "\n";//RPL_NAMEREPLY
 			   client.getJoinedRoomList().addLast(r);//add join room into joined room list of client, client can manage room it has joined
 			   client.send(message);

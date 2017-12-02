@@ -1,5 +1,7 @@
 package ircserver;
 
+import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -24,11 +26,20 @@ public class Server implements Runnable {
     }
 
     public static void main(String[] args) {
+        JFrame frame = new JFrame("IRC Server");
+        frame.setPreferredSize(new Dimension(200, 100));
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        JLabel label = new JLabel("");
+        frame.getContentPane().add(label, BorderLayout.NORTH);
         Server server = null;
         if (args.length != 1)
-            System.out.println("Usage: java server.Server port");
-        else
+            label.setText("Missing arguments...");
+        else{
             server = new Server(Integer.parseInt(args[0]));
+            label.setText("Listening on port: " + args[0]);
+        }
+        frame.pack();
+        frame.setVisible(true);
     }
 
     @Override
@@ -36,7 +47,7 @@ public class Server implements Runnable {
         while (waitingThread != null){
             try{
                 if (Thread.interrupted())
-                    return;
+                    break;
                 System.out.println("Waiting for incoming connection request...");
                 connectClient(server.accept());
             }
@@ -56,7 +67,7 @@ public class Server implements Runnable {
         return roomList;
     }
 
-    //create,and start waitingThread serving a connection with client
+    //create and start a connection with client
     private void connectClient(Socket socket)
     {
         ServerThread client = new ServerThread(this, socket);
@@ -65,7 +76,7 @@ public class Server implements Runnable {
             client.start();
         }
         catch(IOException e){
-            System.out.println("Thread error : " + e);
+            System.out.println("Thread error : " + e.getMessage());
         }
     }
 }

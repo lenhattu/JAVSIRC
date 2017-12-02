@@ -13,13 +13,12 @@ public class ServerClientList extends ClientList{
 		   requestClient.send("Your nickname is accepted!\n");
 	   }
 	   else//send error message
-		   requestClient.send("Error: Nickname " +nickName+ " is already in use");//ERR_NICKNAMEINUSE  
+		   requestClient.send("Error: Nickname " + nickName + " is already in use");//ERR_NICKNAMEINUSE
 	}
 	
 	//handle QUIT command
 	//remove the user from the list of all active users
 	public synchronized void quit(String nick){
 		removeClient(nick);
-		
 	}
 }
