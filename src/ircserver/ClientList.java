@@ -8,7 +8,7 @@ public class ClientList extends LinkedList<ServerThread>{
 	
 	//find server thread in the connection with client who has nick name <nick>
 	public synchronized ServerThread findClient(String nick){
-		for (int i = 0; i < this.size() ; i++)//can replace by iterator
+		for (int i = 0; i < this.size() ; i++)
 	         if (get(i).getNickName().equals(nick))
 	            return get(i);
 		
@@ -30,7 +30,7 @@ public class ClientList extends LinkedList<ServerThread>{
 	//list all of nick name of clients in the list
 	public synchronized String listClient(){
 		String list = "";
-		for (int i = 0;i< this.size();i++){
+		for (int i = 0; i < this.size(); i++){
 			list += get(i).getNickName() + " ";
 		}
 		return list;

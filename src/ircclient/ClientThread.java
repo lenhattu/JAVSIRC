@@ -6,14 +6,12 @@ import java.net.Socket;
 
 public class ClientThread extends Thread
 { 
-   private Socket socket = null;//socket used by client
    private Client thread = null;//the thread in Client
    private DataInputStream dataInputStream = null;//input stream (get responses from server)
    private ChatSubWindow console  = null;//console window in panel
    
    public ClientThread(Client thread, Socket socket){
 	  this.thread = thread;
-      this.socket = socket;
       try{
     	 dataInputStream = new DataInputStream(socket.getInputStream());
       }
@@ -39,7 +37,7 @@ public class ClientThread extends Thread
 
    //handle corrupted connection from server
    private void handleCorruptedConnection(){
-       thread.getConsole().setDialog("Server shut down!");
+       thread.getConsole().setDialog("Disconnected from server");
        thread.close();
        this.close();
    }
@@ -49,7 +47,7 @@ public class ClientThread extends Thread
 	  if (msg.equals("QUIT")){
 		  thread.close();
 		  //exit
-          System.exit(0);
+		  System.exit(0);
       }
 	  else{
     	  ChatWindow ccw = thread.getClientChatWindow();//get the panel

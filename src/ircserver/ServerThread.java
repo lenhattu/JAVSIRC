@@ -190,8 +190,10 @@ public class ServerThread extends Thread
             //now client thread can close its connection and stop
             this.send("QUIT");
             //close all of streams
-            if (dataInputStream != null)  dataInputStream.close();
-            if (dataOutputStream != null) dataOutputStream.close();
+            if (dataInputStream != null)
+                dataInputStream.close();
+            if (dataOutputStream != null)
+                dataOutputStream.close();
             if (socket != null)
                 socket.close();
         }
@@ -279,6 +281,33 @@ public class ServerThread extends Thread
                 roomCL.sendMessage(param, this.nickName, text, this);
             }
         }
+    }
+
+    //handle KICK from server
+    public void handleKickCommand(){
+        if (nickName != null){
+            //At first, leave all of the rooms joined by this getClientList()
+            while (!joinedRoomList.isEmpty()){
+                this.handleLeaveCommand(joinedRoomList.getFirst().getName());
+            }
+            //then the client is associated with no room, can remove it from the client list
+            server.getClientList().quit(this.nickName);
+        }
+        try{
+            //notify
+            this.send("You have been kicked by server...");
+            //close all of streams
+            if (dataInputStream != null)
+                dataInputStream.close();
+            if (dataOutputStream != null)
+                dataOutputStream.close();
+            if (socket != null)
+                socket.close();
+        }
+        catch(IOException e){
+            System.out.println("Error: closing thread " + e);
+        }
+        this.interrupt();
     }
 
     //create input stream, output stream buffer

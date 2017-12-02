@@ -2,6 +2,8 @@ package ircserver;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -9,13 +11,13 @@ import java.net.Socket;
 public class Server implements Runnable {
     private ServerClientList serverClientList = new ServerClientList();//list of active users
     private RoomList roomList = new RoomList();// list of rooms in server
-    private ServerSocket server = null; // server's welcoming socket
+    private ServerSocket serverSocket = null; // server's welcoming socket
     private Thread waitingThread = null; // server waitingThread
 
     public Server(int port){
         //create server welcoming socket
         try{
-            server = new ServerSocket(port);
+            serverSocket = new ServerSocket(port);
         }
         catch(IOException e){
             System.out.println("Can't use port " + port + ": " + e.getMessage());
@@ -29,14 +31,32 @@ public class Server implements Runnable {
         JFrame frame = new JFrame("IRC Server");
         frame.setPreferredSize(new Dimension(200, 100));
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEADING));
+
         JLabel label = new JLabel("");
-        frame.getContentPane().add(label, BorderLayout.NORTH);
-        Server server = null;
+        panel.add(label);
+
+        frame.getContentPane().add(panel);
         if (args.length != 1)
-            label.setText("Missing arguments...");
+            label.setText("Missing port argument...");
         else{
-            server = new Server(Integer.parseInt(args[0]));
+            Server server = new Server(Integer.parseInt(args[0]));
             label.setText("Listening on port: " + args[0]);
+            JTextField textField = new JTextField();
+            textField.setPreferredSize(new Dimension(90, 30));
+            panel.add(textField);
+
+            JButton button = new JButton("Kick");
+            button.setPreferredSize(new Dimension(60, 30));
+            button.setModel(new DefaultButtonModel());
+            button.addActionListener(new ActionListener() {
+                @Override
+                public void actionPerformed(ActionEvent e) {
+                    server.serverClientList.kick(textField.getText());
+                }
+            });
+            panel.add(button);
         }
         frame.pack();
         frame.setVisible(true);
@@ -49,7 +69,7 @@ public class Server implements Runnable {
                 if (Thread.interrupted())
                     break;
                 System.out.println("Waiting for incoming connection request...");
-                connectClient(server.accept());
+                connectClient(serverSocket.accept());
             }
             catch(IOException e){
                 System.out.println("Can't accept this request: " + e);

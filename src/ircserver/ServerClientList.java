@@ -21,4 +21,13 @@ public class ServerClientList extends ClientList{
 	public synchronized void quit(String nick){
 		removeClient(nick);
 	}
+
+	//handle KICK command
+    //disconnect a specific user
+    public synchronized void kick(String nick){
+	    ServerThread client = findClient(nick);
+	    if (client != null){
+	        client.handleKickCommand();
+        }
+    }
 }
