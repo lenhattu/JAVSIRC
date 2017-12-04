@@ -15,7 +15,7 @@ public class ChatWindow extends JPanel{
     	tabbedWindows = new JTabbedPane();
     	this.thread = thread;
     	
-        tabbedWindows.addTab("Console",null,new ChatSubWindow(thread,"Console"));
+        tabbedWindows.addTab("Console",null, new ChatSubWindow(thread,"Console"));
         tabbedWindows.setSelectedIndex(0);
 
         //Add the tabbed pane to this panel.

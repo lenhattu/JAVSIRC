@@ -84,9 +84,9 @@ public class Client implements Runnable {
     }
 
     //send the message entered by user to server
-    public void send(String message){
+    public void send(String message) {
         try{
-            dataOutputStream.writeUTF(message);//read input from clientThread, send to server
+            dataOutputStream.writeUTF(message); //read input from clientThread, send to server
             dataOutputStream.flush();
         }
         catch(IOException e){

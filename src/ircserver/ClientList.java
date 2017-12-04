@@ -11,8 +11,7 @@ public class ClientList extends LinkedList<ServerThread>{
 		for (int i = 0; i < this.size() ; i++)
 	         if (get(i).getNickName().equals(nick))
 	            return get(i);
-		
-	      return null;
+        return null;
 	}
 
 	//remove from the list a pointer to the server thread which is in the connection with client who has nick name <nick>
@@ -35,5 +34,4 @@ public class ClientList extends LinkedList<ServerThread>{
 		}
 		return list;
 	}
-
 }

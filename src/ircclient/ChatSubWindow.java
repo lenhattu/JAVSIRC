@@ -10,7 +10,6 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 	private JTextField input;
 	private JTextArea dialog;
 	private String ChatWindowName = null;
-	private String newline = "\n";
 
 	private Client thread = null;
 	
@@ -54,31 +53,35 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 		//keep select all previous input
 		input.selectAll();
 		//if user in console window
-		if (this.ChatWindowName.equals("Console")){
-			setDialog(text);//display the command entered by user in the console
+		if (this.ChatWindowName.equals("Console")) {
+			setDialog(text); //display the command entered by user in the console
 			//handle LEAVE command entered by user
 			//remove the chat window for the room specified in LEAVE command
 			String [] parse = text.split(" ", 2);
-			if (parse.length > 1 && parse[0].equals("LEAVE") && !parse[1].equals("Console")){//check it is the LEAVE command
-				ChatSubWindow removingTab = thread.getClientChatWindow().findChatWindow(parse[1]);//find the chat window of specified room
-				if (removingTab != null)// if there is a chat window for a specified room
-					thread.getClientChatWindow().getTabbedwnd().remove(removingTab);//then delete the room
+			if (parse.length > 1 && parse[0].equals("LEAVE") && !parse[1].equals("Console")) { //check if it is the LEAVE command
+				ChatSubWindow removingTab = thread.getClientChatWindow().findChatWindow(parse[1]); //find the chat window of specified room
+				if (removingTab != null) //if there is a chat window for a specified room
+					thread.getClientChatWindow().getTabbedwnd().remove(removingTab); //then delete the room
 			}
 			
-			thread.send(text);//send the original message entered by user
-		
-		}
-		else{//if not, add SEND <CHANNEL> before text, to create SEND command
-			String sendingMessage = "SEND "+ChatWindowName+" :"+text;//send command 
-			thread.getClientChatWindow().findChatWindow("Console").setDialog(sendingMessage);//add command to the console window
-			thread.send(sendingMessage);//send command message
-		}
+			thread.send(text); //send the original message entered by user
+		} else if (this.ChatWindowName.charAt(0) == '#') { //if in normal room subwindow, create SEND command
+			String sendingMessage = "SEND " + ChatWindowName + " :" + text; //send command
+			//thread.getClientChatWindow().findChatWindow("Console").setDialog(sendingMessage); //send command to console
+			thread.send(sendingMessage); //send command message
+		} else { //create whisper command for private room
+            String [] parse = ChatWindowName.split("-", 2);
+            String receiver = parse[1];
+		    String sendingMessage = "WHISPER " + receiver + " :" + text; //whisper command
+            //thread.getClientChatWindow().findChatWindow("Console").setDialog(sendingMessage); //send command to console
+            thread.send(sendingMessage); //send command message
+        }
 	}
 	
 	//append new message to the dialog
-	public void setDialog(String message){
-		dialog.append(message+newline);
-		dialog.setCaretPosition(dialog.getDocument().getLength());//force the panel scroll to the bottom of the text area
+	public void setDialog(String message) {
+		dialog.append(message + "\n");
+		dialog.setCaretPosition(dialog.getDocument().getLength()); //force the panel scroll to the bottom of the text area
 	}
 	
 }

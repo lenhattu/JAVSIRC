@@ -5,10 +5,10 @@ package ircserver;
 public class RoomClientList extends ClientList{
 	
 	//send message from one user to all users in one room
-	public synchronized void sendMessage(String roomName, String nick, String input, ServerThread client){
+	public synchronized void sendMessage(String roomName, String nick, String input, ServerThread client) {
 		if (findClient(nick) == null) //not in this room
 			   client.send("Error: Cannot send to room " + roomName); //ERR_CANNOTSENDTOROOM
-		else{
+		else {
 			for (int i = 0; i < size(); i++)
 		          get(i).send(roomName + " " + nick + " : " + input);
 		}
@@ -28,6 +28,4 @@ public class RoomClientList extends ClientList{
 		client.send("Error: You're not in room " + r.getName());
 	    return null;
 	}
-	
-	
 }
