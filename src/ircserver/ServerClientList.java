@@ -36,7 +36,10 @@ public class ServerClientList extends ClientList{
     public synchronized void whisper(String sender, String receiver, String text) {
         ServerThread fromClient = findClient(sender);
         ServerThread toClient = findClient(receiver);
-        fromClient.send(sender + "-" + receiver + " " + sender + " : " + text);
-        toClient.send(receiver + "-" + sender + " " + sender + " : " + text);
+        if (toClient != null) {
+            fromClient.send(sender + "-" + receiver + " " + sender + " : " + text);
+            toClient.send(receiver + "-" + sender + " " + sender + " : " + text);
+        } else
+            fromClient.send(receiver + " does not exist\n");
     }
 }

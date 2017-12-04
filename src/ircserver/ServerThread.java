@@ -301,7 +301,7 @@ public class ServerThread extends Thread
         }
         try {
             //notify
-            this.send("You have been kicked by server...");
+            this.send("\nYou have been kicked by server...");
             //close all of streams
             if (dataInputStream != null)
                 dataInputStream.close();
