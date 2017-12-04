@@ -9,10 +9,10 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Server implements Runnable {
-    private ServerClientList serverClientList = new ServerClientList();//list of active users
-    private RoomList roomList = new RoomList();// list of rooms in server
-    private ServerSocket serverSocket = null; // server's welcoming socket
-    private Thread waitingThread = null; // server waitingThread
+    private ServerClientList serverClientList = new ServerClientList(); //list of active users
+    private RoomList roomList = new RoomList(); //list of rooms in server
+    private ServerSocket serverSocket = null; //server's welcoming socket
+    private Thread waitingThread = null; //server waitingThread
 
     public Server(int port){
         //create server welcoming socket

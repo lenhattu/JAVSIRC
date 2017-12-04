@@ -42,4 +42,16 @@ public class ServerClientList extends ClientList{
         } else
             fromClient.send(receiver + " does not exist\n");
     }
+
+    //handle FILE command
+    //transfer file between 2 users
+    public synchronized void fileTransfer(String sender, String receiver, String text) {
+        ServerThread fromClient = findClient(sender);
+        ServerThread toClient = findClient(receiver);
+        if (toClient != null) {
+            fromClient.send(sender + "-" + receiver + " " + sender + " : " + "file...sent");
+            toClient.send(receiver + "-" + sender + " " + sender + " File" + " : " + text);
+        } else
+            fromClient.send(receiver + " does not exist\n");
+    }
 }

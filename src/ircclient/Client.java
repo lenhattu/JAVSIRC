@@ -21,7 +21,7 @@ public class Client implements Runnable {
     private ChatWindow clientWnd = null;
     private ChatSubWindow console = null;
 
-    public Client(String serverName, int serverPort){
+    public Client(String serverName, int serverPort) {
         try{
             socket = new Socket(serverName, serverPort);
             System.out.println("Connected!");
@@ -63,7 +63,7 @@ public class Client implements Runnable {
     //purpose of this is waiting for command from user
     //then handle the command, and send command to server
     @Override
-    public void run(){
+    public void run() {
         //create a frame contains a tabbed panel
         JFrame frame = new JFrame("Chat Client");
         frame.addWindowListener(new WindowAdapter() {
@@ -85,28 +85,26 @@ public class Client implements Runnable {
 
     //send the message entered by user to server
     public void send(String message) {
-        try{
+        try {
             dataOutputStream.writeUTF(message); //read input from clientThread, send to server
             dataOutputStream.flush();
         }
-        catch(IOException e){
+        catch(IOException e) {
             console.setDialog("Can not send: " + e.getMessage());
             close();
         }
     }
 
     //close used resources by this thread
-    public void close()
-    {
-        try
-        {
+    public void close() {
+        try {
             if (dataInputStream != null)  dataInputStream.close();
             if (dataOutputStream != null)  dataOutputStream.close();
             if (socket != null)
                 socket.close();
             this.clientThread.close();
         }
-        catch(IOException e){
+        catch(IOException e) {
             console.setDialog(e.getMessage());
         }
     }

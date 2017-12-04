@@ -1,7 +1,8 @@
 package ircclient;
 
-import java.io.DataInputStream;
-import java.io.IOException;
+import javax.swing.*;
+import java.awt.*;
+import java.io.*;
 import java.net.Socket;
 
 public class ClientThread extends Thread
@@ -48,9 +49,8 @@ public class ClientThread extends Thread
 		  thread.close();
 		  //exit
 		  System.exit(0);
-      }
-	  else {
-    	  ChatWindow ccw = thread.getClientChatWindow();//get the panel
+      } else {
+    	  ChatWindow ccw = thread.getClientChatWindow(); //get the panel
     	  //first send response into console window
     	  if (console == null)
     		  console = ccw.findChatWindow("Console");
@@ -60,13 +60,31 @@ public class ClientThread extends Thread
     	  //next, is name of the user, next ":", then, we know this is the send message
     	  //so forward the message to correct chat window(tab)
     	  //create chat window if it did not exist
-    	  String [] parse = msg.split(" ",4);
+    	  String [] parse = msg.split(" ",5);
     	  if (parse.length >= 3 && parse[2].equals(":")) {
            	  ChatSubWindow chatwnd = ccw.findChatWindow(parse[0]);
         	  if (chatwnd == null)
         		  chatwnd = ccw.addChatWindow(parse[0]);
               chatwnd.setDialog(parse[1] + " : " + parse[3]); //change the dialog of the chat window
-    	  }
+    	  } else if (parse.length >= 3 && parse[3].equals(":")) {
+              ChatSubWindow chatwnd = ccw.findChatWindow(parse[0]);
+              if (chatwnd == null)
+                  chatwnd = ccw.addChatWindow(parse[0]);
+              chatwnd.setDialog(parse[1] + " sent you a file"); //change the dialog of the chat window
+              byte[] byteArray = parse[4].getBytes();
+              FileDialog fd = new FileDialog(new Frame(), "Save", FileDialog.SAVE);
+              fd.setVisible(true);
+              String fileName = fd.getFile();
+              if (fileName != null) {
+                  File file = new File(fd.getDirectory() + fileName);
+                  try (FileOutputStream fileOutputStream = new FileOutputStream(file.getAbsolutePath())) {
+                      fileOutputStream.write(byteArray);
+                      fileOutputStream.close();
+                  } catch (IOException e) {
+                      System.out.println("Error: " + e.getMessage());
+                  }
+              }
+          }
       }
    }
    

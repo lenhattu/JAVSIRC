@@ -11,7 +11,7 @@ public class ServerThread extends Thread
     private DataInputStream dataInputStream = null; //input stream
     private DataOutputStream dataOutputStream = null; //output stream
     private RoomList joinedRoomList = null;  //manage rooms are currently joined by user
-    private String[] commands = {"NICK","QUIT","JOIN","LEAVE","LIST","USERS","SEND","WHISPER"};//list of supported commands
+    private String[] commands = {"NICK","QUIT","JOIN","LEAVE","LIST","USERS","SEND","WHISPER","FILE"}; //list of supported commands
 
     public ServerThread(Server server, Socket socket){
         super();
@@ -61,69 +61,67 @@ public class ServerThread extends Thread
     //handle messages received from a getClientList()
     private void handleCommand(String message) {
         //check the length of message , should <=510
-        if (message.length() > 510)
-            this.send("Error: Message must have less than or equal 510 characters");
-        else{
-            //extract command, params, text
-            String text = null;
-            String command = null;
-            String param = null;
-            //extract text
-            String [] texts = message.split(":", 2);
-            if (texts.length > 1)
-                text = texts[1];
-            //extract command, and params
-            String [] command_and_params = message.split(" ", 0);
-            command = command_and_params[0];
-            //extract params from message, get the first param
-            for (int i = 1; i < command_and_params.length; i++)
-                if (!command_and_params[i].equals("")) {
-                    param = command_and_params[i]; //get param
-                    break;
-                }
-
-            //check whether this is message of inactive or active user
-            if (nickName == null) {
-                if (command.equals("NICK"))
-                    handleNickCommand(param);
-                else if (command.equals("QUIT"))
-                    handleQuitCommand();
-                else
-                    this.send("Error: you are not active user");
+        //extract command, params, text
+        String text = null;
+        String command = null;
+        String param = null;
+        //extract text
+        String [] texts = message.split(":", 2);
+        if (texts.length > 1)
+            text = texts[1];
+        //extract command, and params
+        String [] command_and_params = message.split(" ", 0);
+        command = command_and_params[0];
+        //extract params from message, get the first param
+        for (int i = 1; i < command_and_params.length; i++)
+            if (!command_and_params[i].equals("")) {
+                param = command_and_params[i]; //get param
+                break;
             }
-            else {
-                //only active users can use the commands below, check command, params, text
-                switch (getCommandIndex(command)){
-                    case 0:  handleNickCommand(param);//change nick
-                        break;
-                    case 1:  handleQuitCommand();
-                        break;
-                    case 2:  handleJoinCommand(param);
-                        break;
-                    case 3:  handleLeaveCommand(param);
-                        break;
-                    case 4:  handleListCommand(param);
-                        break;
-                    case 5:  handleUsersCommand(param);
-                        break;
-                    case 6:  handleSendCommand(param, text);
-                        break;
-                    case 7:  handleWhisperCommand(param, text);
-                        break;
-                    default: this.send("Error: not support command "+command);
-                }
+
+        //check whether this is message of inactive or active user
+        if (nickName == null) {
+            if (command.equals("NICK"))
+                handleNickCommand(param);
+            else if (command.equals("QUIT"))
+                handleQuitCommand();
+            else
+                this.send("Error: you are not active user");
+        }
+        else {
+            //only active users can use the commands below, check command, params, text
+            switch (getCommandIndex(command)) {
+                case 0:  handleNickCommand(param);//change nick
+                    break;
+                case 1:  handleQuitCommand();
+                    break;
+                case 2:  handleJoinCommand(param);
+                    break;
+                case 3:  handleLeaveCommand(param);
+                    break;
+                case 4:  handleListCommand(param);
+                    break;
+                case 5:  handleUsersCommand(param);
+                    break;
+                case 6:  handleSendCommand(param, text);
+                    break;
+                case 7:  handleWhisperCommand(param, text);
+                    break;
+                case 8:  handleFileCommand(param, text);
+                    break;
+                default: this.send("Error: not support command "+command);
             }
         }
 
     }
 
     //send response message to user
-    public void send(String msg){
-        try{
+    public void send(String msg) {
+        try {
             dataOutputStream.writeUTF(msg);
             dataOutputStream.flush();
         }
-        catch(IOException e){
+        catch(IOException e) {
             System.out.println("Can not use output stream : " + e.getMessage());
             handleCorruptedConnection();
         }
@@ -145,8 +143,8 @@ public class ServerThread extends Thread
     }
 
     //get the index of a command
-    private int getCommandIndex(String command){
-        for (int i = 0; i < 8; i++)
+    private int getCommandIndex(String command) {
+        for (int i = 0; i < 9; i++)
             if (commands[i].equals(command))
                 return i;
         return -1;
@@ -154,7 +152,7 @@ public class ServerThread extends Thread
     }
 
     //check format : param should contains only numbers and letters
-    private boolean checkParamFormat(String param){
+    private boolean checkParamFormat(String param) {
         for (int i = 0;i < param.length(); i++)
             if (!Character.isLetterOrDigit(param.charAt(i)))
                 return false;
@@ -162,8 +160,8 @@ public class ServerThread extends Thread
     }
 
     //handle NICK command
-    private void handleNickCommand(String param){
-        if (param != null){
+    private void handleNickCommand(String param) {
+        if (param != null) {
             if (param.length() > 10) // A <nickname> has a maximum length of ten (10) characters.
                 this.send("Error: exceed the maximum length of a nickname");
             else if (!checkParamFormat(param))
@@ -176,7 +174,7 @@ public class ServerThread extends Thread
     }
 
     //handle QUIT command
-    private void handleQuitCommand(){
+    private void handleQuitCommand() {
         if (nickName != null){
             //At first, leave all of the rooms joined by this getClientList()
             while (!joinedRoomList.isEmpty()){
@@ -185,7 +183,7 @@ public class ServerThread extends Thread
             //then the client is associated with no room, can remove it from the client list
             server.getClientList().quit(this.nickName);
         }
-        try{
+        try {
             //after performing all of tasks for QUIT command, send "QUIT" back to client
             //now client thread can close its connection and stop
             this.send("QUIT");
@@ -197,7 +195,7 @@ public class ServerThread extends Thread
             if (socket != null)
                 socket.close();
         }
-        catch(IOException e){
+        catch(IOException e) {
             System.out.println("Error: closing thread " + e);
         }
         this.interrupt();
@@ -286,6 +284,17 @@ public class ServerThread extends Thread
             this.send("Error: No text to send\n");
         else {
             server.getClientList().whisper(this.nickName, param, text);
+        }
+    }
+
+    //handle FILE command
+    private void handleFileCommand(String param, String text) {
+        if (param == null)
+            this.send("Error: WHISPER did not have enough parameters\n"); //ERR_NEEDMOREPARAMS
+        else if (text == null || text.equals("")) //ERR_NOTEXTTOSEND
+            this.send("Error: Nothing to send\n");
+        else {
+            server.getClientList().fileTransfer(this.nickName, param, text);
         }
     }
 

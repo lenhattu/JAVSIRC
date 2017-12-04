@@ -4,11 +4,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.*;
 
 public class ChatSubWindow extends JPanel implements ActionListener {
 	
 	private JTextField input;
 	private JTextArea dialog;
+	private JButton button;
+	private JFileChooser fileChooser;
 	private String ChatWindowName = null;
 
 	private Client thread = null;
@@ -20,7 +23,7 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 	}
 
 	public void createGui() {
-		input = new JTextField(25);
+		input = new JTextField(20);
 		input.addActionListener(this);
 		
 		dialog = new JTextArea(15, 25);
@@ -29,7 +32,35 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 		JScrollPane scrollPane = new JScrollPane(dialog,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-			        
+
+		button = new JButton("File");
+        button.setPreferredSize(new Dimension(60, 30));
+        button.setModel(new DefaultButtonModel());
+        button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                fileChooser = new JFileChooser();
+                int returnVal = fileChooser.showOpenDialog(null);
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    File file = fileChooser.getSelectedFile();
+                    if (file != null) {
+                        byte[] byteArray = new byte[(int) file.length()];
+                        try {
+                            FileInputStream fileInputStream = new FileInputStream(file);
+                            fileInputStream.read(byteArray);
+                        } catch (IOException exception) {
+                            System.out.println(exception.getMessage());
+                        }
+                        String[] parse = ChatWindowName.split("-", 2);
+                        String receiver = parse[1];
+                        String text = new String(byteArray);
+                        String sendingMessage = "FILE " + receiver + " :" + text; //file transfer command
+                        thread.send(sendingMessage); //send command message
+                    }
+                }
+            }
+        });
+
 		//gridBag is used to set up the layout of the panel
 		GridBagLayout gridBag = new GridBagLayout();
 		setLayout(gridBag);
@@ -45,6 +76,7 @@ public class ChatSubWindow extends JPanel implements ActionListener {
         //add text field, and text area into the panel
         add(scrollPane, gridCons1);
         add(input, gridCons2);
+        add(button, gridCons2);
   	}
 	
 	//action performed when user hits enter
