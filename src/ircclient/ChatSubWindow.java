@@ -10,7 +10,6 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 	
 	private JTextField input;
 	private JTextArea dialog;
-	private JButton button;
 	private JFileChooser fileChooser;
 	private String ChatWindowName = null;
 
@@ -33,7 +32,7 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-		button = new JButton("File");
+		JButton button = new JButton("File");
         button.setPreferredSize(new Dimension(60, 30));
         button.setModel(new DefaultButtonModel());
         button.addActionListener(new ActionListener() {
@@ -115,5 +114,9 @@ public class ChatSubWindow extends JPanel implements ActionListener {
 		dialog.append(message + "\n");
 		dialog.setCaretPosition(dialog.getDocument().getLength()); //force the panel scroll to the bottom of the text area
 	}
-	
+
+	//clear window
+    public void clearDialog() {
+	    this.dialog.setText("");
+    }
 }

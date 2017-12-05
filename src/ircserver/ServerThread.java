@@ -1,7 +1,13 @@
 package ircserver;
 
+import javax.crypto.Cipher;
 import java.io.*;
 import java.net.Socket;
+import java.security.*;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.Arrays;
+import java.util.Base64;
 
 public class ServerThread extends Thread
 {
@@ -11,7 +17,7 @@ public class ServerThread extends Thread
     private DataInputStream dataInputStream = null; //input stream
     private DataOutputStream dataOutputStream = null; //output stream
     private RoomList joinedRoomList = null;  //manage rooms are currently joined by user
-    private String[] commands = {"NICK","QUIT","JOIN","LEAVE","LIST","USERS","SEND","WHISPER","FILE"}; //list of supported commands
+    private String[] commands = {"NICK","QUIT","JOIN","LEAVE","LIST","USERS","SEND","WHISPER","SECURE","FILE","KEYGEN","DECRYPT","CLEAR"}; //list of supported commands
 
     public ServerThread(Server server, Socket socket){
         super();
@@ -60,11 +66,11 @@ public class ServerThread extends Thread
 
     //handle messages received from a getClientList()
     private void handleCommand(String message) {
-        //check the length of message , should <=510
-        //extract command, params, text
+        //extract command, params, text, public key
         String text = null;
         String command = null;
         String param = null;
+        String publicKey = null;
         //extract text
         String [] texts = message.split(":", 2);
         if (texts.length > 1)
@@ -72,12 +78,12 @@ public class ServerThread extends Thread
         //extract command, and params
         String [] command_and_params = message.split(" ", 0);
         command = command_and_params[0];
-        //extract params from message, get the first param
-        for (int i = 1; i < command_and_params.length; i++)
-            if (!command_and_params[i].equals("")) {
-                param = command_and_params[i]; //get param
-                break;
-            }
+        //extract param from message if any
+        if (command_and_params.length >= 2)
+            param = command_and_params[1];
+        //extract public key if any
+        if (command_and_params.length >= 3)
+            publicKey = command_and_params[2];
 
         //check whether this is message of inactive or active user
         if (nickName == null) {
@@ -91,7 +97,7 @@ public class ServerThread extends Thread
         else {
             //only active users can use the commands below, check command, params, text
             switch (getCommandIndex(command)) {
-                case 0:  handleNickCommand(param);//change nick
+                case 0:  handleNickCommand(param); //change nick
                     break;
                 case 1:  handleQuitCommand();
                     break;
@@ -107,12 +113,19 @@ public class ServerThread extends Thread
                     break;
                 case 7:  handleWhisperCommand(param, text);
                     break;
-                case 8:  handleFileCommand(param, text);
+                case 8:  handleSecureCommand(param, publicKey, text);
+                    break;
+                case 9:  handleFileCommand(param, text);
+                    break;
+                case 10: handleKeygenCommand();
+                    break;
+                case 11: handleDecryptCommand(param, text);
+                    break;
+                case 12: handleClearCommand();
                     break;
                 default: this.send("Error: not support command "+command);
             }
         }
-
     }
 
     //send response message to user
@@ -144,7 +157,7 @@ public class ServerThread extends Thread
 
     //get the index of a command
     private int getCommandIndex(String command) {
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < 13; i++)
             if (commands[i].equals(command))
                 return i;
         return -1;
@@ -163,9 +176,9 @@ public class ServerThread extends Thread
     private void handleNickCommand(String param) {
         if (param != null) {
             if (param.length() > 10) // A <nickname> has a maximum length of ten (10) characters.
-                this.send("Error: exceed the maximum length of a nickname");
+                this.send("Error: Exceed the maximum length of a nickname");
             else if (!checkParamFormat(param))
-                this.send("Error: Erroneus nickname "+ param);//ERR_ERRONEUSNICKNAME
+                this.send("Error: Invalid nickname "+ param);//ERR_ERRONEUSNICKNAME
             else
                 server.getClientList().nick(this, param);
         }
@@ -287,15 +300,124 @@ public class ServerThread extends Thread
         }
     }
 
+    //handle SECURE command
+    private void handleSecureCommand(String param, String publicKey, String text) {
+        if (param == null || publicKey == null)
+            this.send("Error: SECURE did not have enough parameters\n"); //ERR_NEEDMOREPARAMS
+        else if (text == null || text.equals("")) //ERR_NOTEXTTOSEND
+            this.send("Error: No text to send\n");
+        else {
+            //encrypt with public key and whisper
+            try {
+                String encryptedText = encrypt(text, publicKey);
+                server.getClientList().whisper(this.nickName, param, encryptedText);
+            } catch (Exception e) {
+                this.send("Error: encryption " + e.getMessage());
+            }
+        }
+    }
+
+    //encryption
+    private static String encrypt(String input, String publicKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING");
+        cipher.init(Cipher.ENCRYPT_MODE, loadPublicKey(publicKey));
+        byte[] inputBytes = input.getBytes();
+        byte[] outputBytes = cipher.doFinal(inputBytes);
+        return Base64.getEncoder().encodeToString(outputBytes);
+    }
+
+    //decryption
+    private static String decrypt(String input, String privateKey) throws Exception {
+        Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1PADDING");
+        cipher.init(Cipher.DECRYPT_MODE, loadPrivateKey(privateKey));
+        byte[] inputBytes = Base64.getDecoder().decode(input);
+        byte[] outputBytes = cipher.doFinal(inputBytes);
+        return new String(outputBytes);
+    }
+
+    //convert String to PrivateKey
+    public static PrivateKey loadPrivateKey(String input) throws GeneralSecurityException {
+        byte[] clear = Base64.getDecoder().decode(input);
+        PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(clear);
+        KeyFactory fact = KeyFactory.getInstance("RSA");
+        PrivateKey priv = fact.generatePrivate(keySpec);
+        Arrays.fill(clear, (byte) 0);
+        return priv;
+    }
+
+    //convert String to PublicKey
+    public static PublicKey loadPublicKey(String input) throws GeneralSecurityException {
+        byte[] data = Base64.getDecoder().decode(input);
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(data);
+        KeyFactory fact = KeyFactory.getInstance("RSA");
+        return fact.generatePublic(spec);
+    }
+
+    //convert PrivateKey to String
+    public static String savePrivateKey(PrivateKey input) throws GeneralSecurityException {
+        KeyFactory fact = KeyFactory.getInstance("RSA");
+        PKCS8EncodedKeySpec spec = fact.getKeySpec(input,
+                PKCS8EncodedKeySpec.class);
+        byte[] packed = spec.getEncoded();
+        String key64 = Base64.getEncoder().encodeToString(packed);
+
+        Arrays.fill(packed, (byte) 0);
+        return key64;
+    }
+
+    //convert PublicKey to String
+    public static String savePublicKey(PublicKey input) throws GeneralSecurityException {
+        KeyFactory fact = KeyFactory.getInstance("RSA");
+        X509EncodedKeySpec spec = fact.getKeySpec(input,
+                X509EncodedKeySpec.class);
+        return Base64.getEncoder().encodeToString(spec.getEncoded());
+    }
+
     //handle FILE command
     private void handleFileCommand(String param, String text) {
         if (param == null)
-            this.send("Error: WHISPER did not have enough parameters\n"); //ERR_NEEDMOREPARAMS
+            this.send("Error: FILE did not have enough parameters\n"); //ERR_NEEDMOREPARAMS
         else if (text == null || text.equals("")) //ERR_NOTEXTTOSEND
             this.send("Error: Nothing to send\n");
         else {
             server.getClientList().fileTransfer(this.nickName, param, text);
         }
+    }
+
+    //handle KEYGEN command
+    private void handleKeygenCommand() {
+        try {
+            KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
+            keyPairGenerator.initialize(512);
+            KeyPair keyPair = keyPairGenerator.generateKeyPair();
+            PublicKey publicKey = keyPair.getPublic();
+            PrivateKey privateKey = keyPair.getPrivate();
+            this.send("PrivateKey=" + savePrivateKey(privateKey) + "\n" + "PublicKey=" + savePublicKey(publicKey) + "\n");
+        } catch (GeneralSecurityException e) {
+            this.send("Error: Unable to generate key pair " + e.getMessage());
+        }
+    }
+
+    //handle DECRYPT command
+    private void handleDecryptCommand(String param, String text) {
+        if (param == null)
+            this.send("Error: DECRYPT did not have enough parameters\n"); //ERR_NEEDMOREPARAMS
+        else if (text == null || text.equals("")) //ERR_NOTEXTTODECRYPT
+            this.send("Error: No text to decrypt\n");
+        else {
+            //decryption
+            try {
+                String decryptedText = decrypt(text, param);
+                this.send("Decrypted message = " + decryptedText + "\n");
+            } catch (Exception e) {
+                this.send("Error: decryption " + e.getMessage());
+            }
+        }
+    }
+
+    //handle CLEAR command
+    private void handleClearCommand() {
+        this.send("CLEAR");
     }
 
     //handle KICK from server

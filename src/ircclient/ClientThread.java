@@ -49,6 +49,8 @@ public class ClientThread extends Thread
 		  thread.close();
 		  //exit
 		  System.exit(0);
+      } else if (msg.equals("CLEAR")) {
+	      thread.getConsole().clearDialog();
       } else {
     	  ChatWindow ccw = thread.getClientChatWindow(); //get the panel
     	  //first send response into console window
